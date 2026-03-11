@@ -1,14 +1,6 @@
-import Heading from "@/components/heading";
-import SafeAreaScreen from "@/components/safe-area-screen";
+import CoursesScreen from "@/features/courses/screens/courses-screen";
 import React from "react";
 
 export default function CourseTab() {
-	return (
-		<SafeAreaScreen>
-			<Heading
-				title="Courses"
-				subTitle="Manage Your"
-			/>
-		</SafeAreaScreen>
-	);
+	return <CoursesScreen />;
 }
