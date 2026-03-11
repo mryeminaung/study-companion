@@ -6,5 +6,9 @@ export default function SafeAreaScreen({
 }: {
 	children: React.ReactNode;
 }) {
-	return <SafeAreaView className="flex-1 p-5">{children}</SafeAreaView>;
+	return (
+		<SafeAreaView className="flex-1 px-5 pt-5 bg-white">
+			{children}
+		</SafeAreaView>
+	);
 }
