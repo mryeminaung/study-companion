@@ -1,14 +1,6 @@
-import Heading from "@/components/heading";
-import SafeAreaScreen from "@/components/safe-area-screen";
+import TasksScreen from "@/features/tasks/screens/tasks-screen";
 import React from "react";
 
 export default function TasksTab() {
-	return (
-		<SafeAreaScreen>
-			<Heading
-				title="Tasks"
-				subTitle="Manage Your"
-			/>
-		</SafeAreaScreen>
-	);
+	return <TasksScreen />;
 }
