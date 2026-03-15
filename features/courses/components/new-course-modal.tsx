@@ -1,38 +1,73 @@
+import { FormInput } from "@/components/form-input";
+import { supabase } from "@/lib/supabase";
 import Feather from "@expo/vector-icons/Feather";
 import React, { useState } from "react";
-import { Modal, Pressable, Text, TextInput, View } from "react-native";
+import { Controller, useForm } from "react-hook-form";
+import { Modal, Pressable, Text, View } from "react-native";
+import { z } from "zod";
 import { COURSE_COLORS } from "../constants/colors";
 
-export default function NewCourseModal() {
-	const [selectedColor, setSelectedColor] = useState<{
-		id: number;
-		name: string;
-		hex: string;
-	}>(COURSE_COLORS[0]);
+const newCourseSchema = z.object({
+	courseName: z
+		.string()
+		.trim()
+		.min(1, { message: "Please enter a course name." }),
+	authorId: z.number(),
+	studyHours: z
+		.string()
+		.trim()
+		.min(1, { message: "Please enter study hours." })
+		.refine((val) => !isNaN(Number(val)) && Number(val) > 0, {
+			message: "Please enter a valid number of study hours.",
+		}),
+	color: z.string().min(1, { message: "Please choose a course color." }),
+});
 
+type NewCourseFormValues = z.infer<typeof newCourseSchema>;
+
+export default function NewCourseModal({
+	newEvent,
+	setNewEvent,
+}: {
+	newEvent: boolean;
+	setNewEvent: (value: boolean) => void;
+}) {
 	const [modalVisible, setModalVisible] = useState(false);
 
-	const [courseData, setCourseData] = useState({
-		courseName: "",
-		color: "",
-		studyHours: 0,
-	});
-
-	const handleInputChange = (field: string, value: string | number) => {
-		setCourseData((prev) => ({
-			...prev,
-			[field]: value,
-		}));
-	};
-
-	const handleCourseSubmission = () => {
-		console.log(courseData);
-		setModalVisible(false);
-		setCourseData({
-			courseName: "",
-			color: "",
-			studyHours: 0,
+	const { control, handleSubmit, reset, setError, clearErrors } =
+		useForm<NewCourseFormValues>({
+			defaultValues: {
+				courseName: "",
+				studyHours: "",
+				color: "",
+				authorId: 1,
+			},
 		});
+
+	const handleCourseSubmission = async (values: NewCourseFormValues) => {
+		clearErrors();
+
+		const result = newCourseSchema.safeParse(values);
+		if (!result.success) {
+			for (const issue of result.error.issues) {
+				const field = issue.path[0] as keyof NewCourseFormValues;
+				setError(field, { message: issue.message });
+			}
+			return;
+		}
+		const { courseName, studyHours, color, authorId } = result.data;
+
+		await supabase.from("courses").insert({
+			name: courseName,
+			study_hour: Number(studyHours),
+			color,
+			author_id: authorId,
+		});
+
+		setNewEvent(!newEvent);
+
+		setModalVisible(false);
+		reset();
 	};
 
 	return (
@@ -56,14 +91,19 @@ export default function NewCourseModal() {
 				animationType="slide"
 				transparent={true}
 				visible={modalVisible}
-				onRequestClose={() => setModalVisible(false)} // Mandatory for Android back button
-			>
+				onRequestClose={() => {
+					setModalVisible(false);
+					reset();
+				}}>
 				<View className="flex-1 justify-end bg-black/20">
 					<View className="bg-white p-6 rounded-t-3xl">
 						<View className="flex-row items-center justify-between mb-3">
 							<Text className="text-xl font-semibold">Add New Course</Text>
 							<Feather
-								onPress={() => setModalVisible(false)}
+								onPress={() => {
+									setModalVisible(false);
+									reset();
+								}}
 								name="x"
 								size={24}
 								color="black"
@@ -71,52 +111,58 @@ export default function NewCourseModal() {
 						</View>
 
 						{/* course name */}
-						<View className="mb-3">
-							<Text className="text-sm mb-2 text-gray-600">Course Name</Text>
-							<TextInput
-								onChangeText={(value) => handleInputChange("courseName", value)}
-								className="border p-4 rounded-xl"
-								placeholder="eg. Mathematics"
-							/>
-						</View>
+						<FormInput
+							label="Course Name"
+							control={control}
+							name="courseName"
+							placeholder="eg. Mathematics"
+						/>
 
 						{/* study hours */}
-						<View className="mb-3">
-							<Text className="text-sm mb-2 text-gray-600">
-								Total Study Hours Goal
-							</Text>
-							<TextInput
-								onChangeText={(value) => handleInputChange("studyHours", value)}
-								className="border p-4 rounded-xl"
-								keyboardType="number-pad"
-								placeholder="eg. 10"
-							/>
-						</View>
+						<FormInput
+							label="Total Study Hours Goal"
+							control={control}
+							name="studyHours"
+							keyboardType="number-pad"
+							placeholder="eg. 10"
+						/>
 
 						{/* color picker */}
-						<View className="mb-3">
-							<Text className="text-sm mb-2 text-gray-600">
-								Choose Course Color
-							</Text>
-							<View className="flex-row flex-wrap gap-2">
-								{COURSE_COLORS.map((color) => (
-									<Pressable
-										key={color.id}
-										style={{
-											backgroundColor: color.hex,
-											borderWidth: selectedColor.id === color.id ? 2 : 0,
-										}}
-										onPress={() => {
-											setSelectedColor(color);
-											handleInputChange("color", color.hex);
-										}}
-										className="rounded-full h-[45px] w-[45px]"
-									/>
-								))}
-							</View>
-						</View>
+						<Controller
+							control={control}
+							name="color"
+							render={({
+								field: { value, onChange },
+								fieldState: { error },
+							}) => (
+								<View className="mb-3">
+									<Text className="text-sm mb-2 text-gray-600">
+										Choose Course Color
+									</Text>
+									<View className="flex-row flex-wrap gap-2">
+										{COURSE_COLORS.map((color) => (
+											<Pressable
+												key={color.id}
+												style={{
+													backgroundColor: color.hex,
+													borderWidth: value === color.hex ? 2 : 0,
+												}}
+												onPress={() => onChange(color.hex)}
+												className="rounded-full h-[45px] w-[45px]"
+											/>
+										))}
+									</View>
+									{error && (
+										<Text className="text-red-500 text-xs mt-1">
+											{error.message}
+										</Text>
+									)}
+								</View>
+							)}
+						/>
+
 						<Pressable
-							onPress={handleCourseSubmission}
+							onPress={handleSubmit(handleCourseSubmission)}
 							className="bg-black py-4 rounded-xl items-center">
 							<Text className="text-white font-medium">Create Course</Text>
 						</Pressable>

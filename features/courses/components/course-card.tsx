@@ -1,19 +1,31 @@
+import { supabase } from "@/lib/supabase";
 import { cn } from "@/utils";
 import Feather from "@expo/vector-icons/Feather";
 import React from "react";
 import { Text, View } from "react-native";
 
 type CourseCardProps = {
+	id: number;
 	color: string;
 	courseName: string;
-	progress: number;
+	studyHours: number;
+	newEvent: boolean;
+	setNewEvent: (value: boolean) => void;
 };
 
 export default function CourseCard({
+	id,
 	color,
 	courseName,
-	progress,
+	studyHours,
+	newEvent,
+	setNewEvent,
 }: CourseCardProps) {
+	const handleCourseDelete = async (id: number) => {
+		await supabase.from("courses").delete().eq("id", id);
+		setNewEvent(!newEvent);
+	};
+
 	return (
 		<View
 			className={cn("border border-t-4 rounded-xl p-5 mb-3 border-gray-300")}
@@ -36,24 +48,25 @@ export default function CourseCard({
 					/>
 					<View>
 						<Text className="text-lg font-medium">{courseName}</Text>
-						<Text className="text-sm text-gray-600">12.0h / 40h</Text>
+						<Text className="text-sm text-gray-600">2h / {studyHours}h</Text>
 					</View>
 				</View>
 				<Feather
+					onPress={() => handleCourseDelete(id)}
 					name="trash-2"
-					size={20}
+					size={22}
 					color="red"
 				/>
 			</View>
 			<View className="mt-2">
 				<View className="flex-row justify-between items-center">
 					<Text className="text-sm text-gray-600">Progress</Text>
-					<Text className="text-sm text-gray-600">{progress}%</Text>
+					<Text className="text-sm text-gray-600">{20}%</Text>
 				</View>
 				<View className="w-full h-3 bg-gray-200 rounded-full overflow-hidden mt-1">
 					<View
 						style={{
-							width: `${progress}%`,
+							width: `20%`,
 							backgroundColor: color,
 							height: "100%",
 							borderRadius: 999,
