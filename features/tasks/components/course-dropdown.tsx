@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { Dropdown } from "react-native-element-dropdown";
+import { FormDropdown, type DropdownOption } from "@/components/form-dropdown";
+import type { Control, FieldValues, Path } from "react-hook-form";
+import { Text, View } from "react-native";
 
-const DATA = [
+const DATA: DropdownOption[] = [
 	{ label: "General", value: "1", color: "black" },
 	{ label: "Web Development", value: "2", color: "#10b981" },
 	{ label: "Mathematics", value: "3", color: "#10b981" },
@@ -12,11 +12,17 @@ const DATA = [
 	{ label: "Data Structures", value: "7", color: "#ec4899" },
 ];
 
-export const CourseDropdown = () => {
-	const [value, setValue] = useState("1");
+type CourseDropdownProps<T extends FieldValues = FieldValues> = {
+	control: Control<T>;
+	name: Path<T>;
+};
 
-	const renderItem = (item: any) => {
-		const isSelected = item.value === value;
+export const CourseDropdown = <T extends FieldValues = FieldValues>({
+	control,
+	name,
+}: CourseDropdownProps<T>) => {
+	const renderItem = (item: DropdownOption, selectedValue: string) => {
+		const isSelected = item.value === selectedValue;
 
 		return (
 			<View
@@ -36,59 +42,19 @@ export const CourseDropdown = () => {
 	};
 
 	return (
-		<View>
-			<Dropdown
-				style={styles.dropdown}
-				containerStyle={styles.containerStyle}
-				selectedTextStyle={styles.selectedTextStyle}
-				data={DATA}
-				labelField="label"
-				valueField="value"
-				placeholder="Select a course"
-				value={value}
-				flatListProps={{
-					initialScrollIndex: DATA.findIndex((i) => i.value === value),
-					getItemLayout: (data, index) => ({
-						length: 45,
-						offset: 45 * index,
-						index,
-					}),
-				}}
-				showsVerticalScrollIndicator={false}
-				onChange={(item) => setValue(item.value)}
-				renderItem={renderItem}
-				renderLeftIcon={() => (
-					<View
-						style={{
-							backgroundColor: DATA.find((i) => i.value === value)?.color,
-						}}
-						className="w-3 h-3 rounded-full mr-2"
-					/>
-				)}
-			/>
-		</View>
+		<FormDropdown
+			control={control}
+			name={name}
+			data={DATA}
+			placeholder="Select a course"
+			height={45}
+			renderItem={renderItem}
+			renderLeftIcon={(selectedOption) => (
+				<View
+					style={{ backgroundColor: selectedOption?.color ?? "#64748b" }}
+					className="w-3 h-3 rounded-full mr-2"
+				/>
+			)}
+		/>
 	);
 };
-
-const styles = StyleSheet.create({
-	dropdown: {
-		height: 45,
-		backgroundColor: "white",
-		borderRadius: 10,
-		paddingHorizontal: 16,
-		borderWidth: 1,
-	},
-	containerStyle: {
-		borderRadius: 20,
-		marginTop: 8,
-		paddingVertical: 8,
-		elevation: 5,
-		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 4 },
-		shadowOpacity: 0.1,
-		shadowRadius: 10,
-	},
-	selectedTextStyle: {
-		fontSize: 14,
-	},
-});

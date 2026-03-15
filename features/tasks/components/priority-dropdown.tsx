@@ -1,18 +1,24 @@
-import React, { useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
-import { Dropdown } from "react-native-element-dropdown";
+import { FormDropdown, type DropdownOption } from "@/components/form-dropdown";
+import type { Control, FieldValues, Path } from "react-hook-form";
+import { Text, View } from "react-native";
 
-const DATA = [
-	{ label: "High", value: "1" },
-	{ label: "Medium", value: "2" },
-	{ label: "Low", value: "3" },
+const DATA: DropdownOption[] = [
+	{ label: "High", value: "high" },
+	{ label: "Medium", value: "medium" },
+	{ label: "Low", value: "low" },
 ];
 
-export const PriorityDropdown = () => {
-	const [value, setValue] = useState("2");
+type PriorityDropdownProps<T extends FieldValues = FieldValues> = {
+	control: Control<T>;
+	name: Path<T>;
+};
 
-	const renderItem = (item: any) => {
-		const isSelected = item.value === value;
+export const PriorityDropdown = <T extends FieldValues = FieldValues>({
+	control,
+	name,
+}: PriorityDropdownProps<T>) => {
+	const renderItem = (item: DropdownOption, selectedValue: string) => {
+		const isSelected = item.value === selectedValue;
 
 		return (
 			<View
@@ -28,49 +34,11 @@ export const PriorityDropdown = () => {
 	};
 
 	return (
-		<View>
-			<Dropdown
-				style={styles.dropdown}
-				containerStyle={styles.containerStyle}
-				selectedTextStyle={styles.selectedTextStyle}
-				data={DATA}
-				labelField="label"
-				valueField="value"
-				value={value}
-				flatListProps={{
-					initialScrollIndex: DATA.findIndex((i) => i.value === value),
-					getItemLayout: (data, index) => ({
-						length: 40,
-						offset: 40 * index,
-						index,
-					}),
-				}}
-				showsVerticalScrollIndicator={false}
-				onChange={(item) => setValue(item.value)}
-				renderItem={renderItem}
-			/>
-		</View>
+		<FormDropdown
+			control={control}
+			name={name}
+			data={DATA}
+			renderItem={renderItem}
+		/>
 	);
 };
-
-const styles = StyleSheet.create({
-	dropdown: {
-		height: 40,
-		borderRadius: 10,
-		paddingHorizontal: 16,
-		borderWidth: 1,
-	},
-	containerStyle: {
-		borderRadius: 20,
-		marginTop: 8,
-		paddingVertical: 8,
-		elevation: 5,
-		shadowColor: "#000",
-		shadowOffset: { width: 0, height: 4 },
-		shadowOpacity: 0.1,
-		shadowRadius: 10,
-	},
-	selectedTextStyle: {
-		fontSize: 14,
-	},
-});
